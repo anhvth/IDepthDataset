@@ -3,3 +3,6 @@ exclude.txt
 dms.sh
 FocusOnDepth/datasets
 FocusOnDepth/input
+FocusOnDepth/models
+FocusOnDepth/output
+output

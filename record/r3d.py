@@ -65,21 +65,27 @@ def load_conf(filepath):
     return depth_img
 
 # @memoize
-def load_r3d(depth_filepath, meta=json.load(open('./data/r3d/metadata')), min_conf=2, reshape=True):
+def load_r3d(depth_filepath, meta=json.load(open('./data/r3d/metadata')), min_conf=2, reshape=True, pred_depth_map=None):
     """
     Load RGB-D data from a .depth file"""
-    depth_img = load_depth(depth_filepath).copy()
+    if pred_depth_map is not None:
+        depth_img = pred_depth_map.copy()
+    else:
+        depth_img = load_depth(depth_filepath).copy()
     rgb = cv2.imread(depth_filepath.replace('.depth', '.jpg'))[...,::-1].copy()
     conf = load_conf(depth_filepath.replace('.depth', '.conf'))
-    conf_mask = conf<min_conf
-    depth_img[conf_mask] = 0
+    conf = mmcv.imrescale(conf, (depth_img.shape[1], depth_img.shape[0]), interpolation='nearest')
+
+    invalid_mask = conf<min_conf
+    # import ipdb; ipdb.set_trace()
+    depth_img[invalid_mask] = 0
     depth_img = mmcv.imrescale(depth_img, (meta['w'], meta['h']), interpolation='nearest')
     conf = mmcv.imrescale(conf, (meta['w'], meta['h']), interpolation='nearest')
     xyz = depth_map_to_point_cloud(depth_img, meta['h'], meta['w'])
     if reshape:
         rgb = rgb.reshape(-1, 3)/255.
         xyz = xyz.reshape(-1, 3)
-    return rgb, xyz, conf_mask, depth_img
+    return rgb, xyz, invalid_mask, depth_img
 
 
 def preload_pcd(path):
