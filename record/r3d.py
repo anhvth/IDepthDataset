@@ -64,8 +64,10 @@ def load_conf(filepath):
     depth_img = depth_img.reshape((256, 192))  # For a LiDAR 3D Video
     return depth_img
 
-
+@memoize
 def load_r3d(depth_filepath, meta=json.load(open('./data/r3d/metadata')), min_conf=2):
+    """
+    Load RGB-D data from a .depth file"""
     depth_img = load_depth(depth_filepath).copy()
     rgb = cv2.imread(depth_filepath.replace('.depth', '.jpg'))[...,::-1].copy()
     conf = load_conf(depth_filepath.replace('.depth', '.conf'))
@@ -77,6 +79,13 @@ def load_r3d(depth_filepath, meta=json.load(open('./data/r3d/metadata')), min_co
     return rgb, xyz, conf
 
 
+def preload_pcd(path):
+    rgb, xyz, conf = load_r3d(path)
+    conf = conf.reshape(-1)
+    rgb = rgb[conf>=1]
+    xyz = xyz[conf>=1]
+    return xyz, rgb
+
 if __name__ == '__main__':
     from avcv.all import *
     paths = sorted(glob('./data/r3d/rgbd/*.depth'), key=lambda path:int(get_name(path)))
@@ -86,13 +95,6 @@ if __name__ == '__main__':
     
 
 
-    @memoize
-    def preload_pcd(path):
-        rgb, xyz, conf = load_r3d(path)
-        conf = conf.reshape(-1)
-        rgb = rgb[conf>=1]
-        xyz = xyz[conf>=1]
-        return xyz, rgb
 
     multi_thread(preload_pcd, paths, max_workers=8)
     pcd = o3d.geometry.PointCloud()
