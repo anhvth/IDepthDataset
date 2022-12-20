@@ -2,35 +2,19 @@
     This script visualize rgbd images and depth images.
 """
 
-import cv2
 import open3d as o3d
 import argparse
-import numpy as np
 import os
-import mmcv
-
-
-from idd.data import visualize_rgbd
-
-
+from idd.r3d import pcd_from_r3d
 
 if __name__ == '__main__':
     os.makedirs(".cache", exist_ok=True)
     parser = argparse.ArgumentParser()
-    parser.add_argument('--rgb', type=str,
-                        default='data/rgbd/rgb/000000.png', help='rgb image')
     parser.add_argument(
-        '--depth', type=str, default='data/rgbd/depth/000000.png', help='depth image')
-    parser.add_argument('--fx', type=float, default=608.17, help='fx')
-    parser.add_argument('--fy', type=float, default=608.17, help='fy')
-    parser.add_argument('--cx', type=float, default=327.45, help='cx')
-    parser.add_argument('--cy', type=float, default=238.49, help='cy')
+        '--input_path', type=str, help='path to the input, could be .depth or .jpg or .conf')
     parser.add_argument('--max_depth', type=float, default=None, help='max depth')
     args = parser.parse_args()
 
     # Read images
-    depth = np.load(args.depth)
-    visualize_rgbd(depth, args.fx, args.fy, args.cx, args.cy, args.rgb, args.max_depth)
-    
-
-
+    pcd = pcd_from_r3d(args.input_path)
+    o3d.visualization.draw_geometries([pcd])
