@@ -3,3 +3,4 @@ data/
 .vscode/
 output
 .cache
+idepthdataset.egg-info/

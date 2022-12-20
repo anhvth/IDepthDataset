@@ -5,27 +5,17 @@
 import cv2
 import open3d as o3d
 import argparse
-import matplotlib.pyplot as plt
 import numpy as np
 import os
+import mmcv
 
-os.makedirs(".cache", exist_ok=True)
 
-def depth_map_to_point_cloud(depth_map, fx, fy, cx, cy):
-    rows, cols = depth_map.shape[:2]
-    # Create arrays to hold the x, y, and z coordinates
-    x = np.empty((rows, cols), dtype=np.float32)
-    y = np.empty((rows, cols), dtype=np.float32)
-    z = np.empty((rows, cols), dtype=np.float32)
-    # Calculate the 3D coordinates for each pixel
-    x = (np.arange(cols) - cx) * depth_map / fx
-    y = (np.arange(rows)[:, np.newaxis] - cy) * depth_map / fy
-    z = depth_map
-    point_cloud = np.stack((x, y, z), axis=-1)
-    return point_cloud
+from idd.data import visualize_rgbd
+
 
 
 if __name__ == '__main__':
+    os.makedirs(".cache", exist_ok=True)
     parser = argparse.ArgumentParser()
     parser.add_argument('--rgb', type=str,
                         default='data/rgbd/rgb/000000.png', help='rgb image')
@@ -40,19 +30,7 @@ if __name__ == '__main__':
 
     # Read images
     depth = np.load(args.depth)
+    visualize_rgbd(depth, args.fx, args.fy, args.cx, args.cy, args.rgb, args.max_depth)
     
 
-    xyz = depth_map_to_point_cloud(depth, args.fx, args.fy, args.cx, args.cy)
-    rgb = cv2.imread(args.rgb)[..., ::-1]
-
-    pcd = o3d.geometry.PointCloud()
-
-    if args.max_depth is not None:
-        mask = depth < args.max_depth
-        xyz = xyz[mask]
-        rgb = rgb[mask]
-
-    pcd.points = o3d.utility.Vector3dVector(xyz.reshape(-1, 3))
-    pcd.colors = o3d.utility.Vector3dVector(rgb.reshape(-1, 3) / 255.0)
-    o3d.visualization.draw_geometries([pcd])
 
