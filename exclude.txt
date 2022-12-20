@@ -5,4 +5,4 @@ FocusOnDepth/datasets
 FocusOnDepth/input
 FocusOnDepth/models
 FocusOnDepth/output
-output
+FocusOnDepth/lightning_logs/

@@ -43,7 +43,7 @@ if __name__ == '__main__':
         cv2.imwrite(args.output_dir + '/segmentation/' + os.path.basename(input).replace('.depth', '.png'), out[...,::-1])
         
         
-    # multi_thread(f, glob(args.input_dir + '/*.depth'), max_workers=8)
+    multi_thread(f, glob(args.input_dir + '/*.depth'), max_workers=8)
 
     # Combine depth and segmentation
     for path_depth in tqdm(glob(args.output_dir + '/depths/*.png')):

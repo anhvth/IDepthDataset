@@ -64,28 +64,42 @@ def load_conf(filepath):
     depth_img = depth_img.reshape((256, 192))  # For a LiDAR 3D Video
     return depth_img
 
-# @memoize
-def load_r3d(depth_filepath, meta=json.load(open('./data/r3d/metadata')), min_conf=2, reshape=True, pred_depth_map=None):
+default_meta = json.load(open('./data/r3d/metadata'))
+
+def load_r3d(depth_filepath=None, rgb_path=None, conf_path=None, meta=default_meta, min_conf=2, reshape=True, pred_depth_map=None):
     """
     Load RGB-D data from a .depth file"""
+    if rgb_path is None:
+        rgb_path = depth_filepath.replace('.depth', '.jpg')
+    if conf_path is None:
+        conf_path = depth_filepath.replace('.depth', '.conf')
+
     if pred_depth_map is not None:
-        depth_img = pred_depth_map.copy()
-    else:
-        depth_img = load_depth(depth_filepath).copy()
-    rgb = cv2.imread(depth_filepath.replace('.depth', '.jpg'))[...,::-1].copy()
-    conf = load_conf(depth_filepath.replace('.depth', '.conf'))
-    conf = mmcv.imrescale(conf, (depth_img.shape[1], depth_img.shape[0]), interpolation='nearest')
+        depth_img_pred = pred_depth_map.copy()
+        
+    if depth_filepath is not None:
+        depth_img_gt = load_depth(depth_filepath).copy()
+
+    rgb = cv2.imread(rgb_path)[...,::-1].copy()
+    depth_img_pred = mmcv.imresize_like(depth_img_pred, rgb, interpolation='nearest')
+    depth_img_gt = mmcv.imresize_like(depth_img_gt, rgb, interpolation='nearest')
+    conf = load_conf(conf_path)
+    conf = mmcv.imrescale(conf, (depth_img_pred.shape[1], depth_img_pred.shape[0]), interpolation='nearest')
 
     invalid_mask = conf<min_conf
-    # import ipdb; ipdb.set_trace()
-    depth_img[invalid_mask] = 0
-    depth_img = mmcv.imrescale(depth_img, (meta['w'], meta['h']), interpolation='nearest')
+    depth_img_pred[invalid_mask] = 0
+    depth_img_gt[invalid_mask] = 0
+    
+    # depth_img = mmcv.imrescale(depth_img, (meta['w'], meta['h']), interpolation='nearest')
     conf = mmcv.imrescale(conf, (meta['w'], meta['h']), interpolation='nearest')
-    xyz = depth_map_to_point_cloud(depth_img, meta['h'], meta['w'])
+    xyz_pred = depth_map_to_point_cloud(depth_img_pred, meta['h'], meta['w'])
+
     if reshape:
         rgb = rgb.reshape(-1, 3)/255.
-        xyz = xyz.reshape(-1, 3)
-    return rgb, xyz, invalid_mask, depth_img
+        xyz_pred = xyz_pred.reshape(-1, 3)
+        xyz_gt = xyz_gt.reshape(-1, 3)
+        
+    return rgb, xyz_pred, invalid_mask, depth_img_pred
 
 
 def preload_pcd(path):
@@ -100,13 +114,10 @@ if __name__ == '__main__':
     from avcv.all import *
     paths = sorted(glob('./data/r3d/rgbd/*.depth'), key=lambda path:int(get_name(path)))
     meta = json.load(open('./data/r3d/metadata'))
+    multi_thread(preload_pcd, paths, max_workers=8)
+    
     vis = o3d.visualization.Visualizer()
     vis.create_window()
-    
-
-
-
-    multi_thread(preload_pcd, paths, max_workers=8)
     pcd = o3d.geometry.PointCloud()
     for i, path in enumerate(paths):
         xyz, rgb = preload_pcd(path)
