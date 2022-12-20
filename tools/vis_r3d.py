@@ -22,10 +22,6 @@ if __name__ == '__main__':
     parser.add_argument('--cy', type=float, default=238.49, help='cy')
     parser.add_argument('--max_depth', type=float, default=None, help='max depth')
     args = parser.parse_args()
-
     # Read images
     depth = np.load(args.depth)
     visualize_rgbd(depth, args.fx, args.fy, args.cx, args.cy, args.rgb, args.max_depth)
-    
-
-
