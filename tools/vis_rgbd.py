@@ -16,6 +16,8 @@ if __name__ == '__main__':
                         default='data/rgbd/rgb/000000.png', help='rgb image')
     parser.add_argument(
         '--depth', type=str, default=None, help='depth image')
+    parser.add_argument(
+        '--conf', type=str, default=None, help='depth image')
     parser.add_argument('--fx', type=float, default=608.17, help='fx')
     parser.add_argument('--fy', type=float, default=608.17, help='fy')
     parser.add_argument('--cx', type=float, default=327.45, help='cx')
@@ -48,4 +50,4 @@ if __name__ == '__main__':
 
     else:
         depth = cv2.imread(args.depth, cv2.IMREAD_ANYDEPTH)
-        visualize_rgbd(depth, args.fx, args.fy, args.cx, args.cy, args.rgb, args.max_depth)
+        visualize_rgbd(depth, args.fx, args.fy, args.cx, args.cy, rgb=args.rgb, conf=args.conf, max_depth=args.max_depth)

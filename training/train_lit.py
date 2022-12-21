@@ -52,13 +52,17 @@ class CustomLitModel(LitModel):
 
     def predict_step(self, batch, batch_idx):
         x  = batch['image']
-        depth_pred = self(x)[0]
+        depth_pred, seg_pred = self(x)
         for i in range(len(depth_pred)):
             depth = depth_pred[i].detach().cpu().numpy()[0]
-            # Save depth map
             filename = batch['filename'][i]
             depth = (depth*3000).astype(np.uint16)
+            conf = seg_pred[i].softmax(0)[1].detach().cpu().numpy()
+            conf = (conf*255).astype(np.uint8)
+            # import ipdb; ipdb.set_trace()
             mmcv.imwrite(depth, f'./output/depth/{filename}.png')
+            mmcv.imwrite(conf, f'./output/segmentation/{filename}.png')
+
 
 sched = fn_schedule_cosine_with_warmpup_decay_timm(
     num_epochs=config['General']['epochs'],
@@ -85,20 +89,19 @@ if args.ckpt is not None:
     T = pred_data.transform_image
     class DS:
         def __init__(self):
-            self.paths = paths = glob('/home/anhvth8/gitprojects/IDepthDataset/data/211222/rgbd/*.jpg')
+            self.paths = paths = glob('/home/anhvth8/gitprojects/IDepthDataset/data/211222-2/rgbd/*.jpg')
         def __len__(self):
             return len(self.paths)
         def __getitem__(self, idx):
             x = T(Image.open(self.paths[idx]))
             return dict(image=x, filename=self.paths[idx].split('/')[-1].split('.')[0])
 
-
-    # import ipdb; ipdb.set_trace()
-    # pred_loader = DataLoader(pred_data, batch_size=config['General']['batch_size'], shuffle=False, num_workers=4)
     pred_loader = DataLoader(DS(), batch_size=config['General']['batch_size'], shuffle=False, num_workers=4)
     batch = next(iter(pred_loader))
     trainer.predict(lit_model, pred_loader)
 else:
-    trainer = get_trainer('focus_on_depth', config['General']['epochs'], gpus=config['General']['gpus'], strategy='dp')
+    trainer = get_trainer('focus_on_depth', config['General']['epochs'], gpus=config['General']['gpus'], strategy=config['General']['strategy'])
     logger.info('Training from scratch')
+    ckpt = torch.load('lightning_logs/focus_on_depth/01/ckpts/last.ckpt')
+    lit_model.load_state_dict(ckpt['state_dict'])
     trainer.fit(lit_model, train_dataloader, val_loader)

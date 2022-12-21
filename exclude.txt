@@ -5,3 +5,4 @@ training/datasets
 training/input
 training/models
 training/lightning_logs/
+.cache

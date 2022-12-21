@@ -1,20 +1,28 @@
 import numpy as np
 import open3d as o3d
-import mmcv
+import mmcv, cv2
 
-def pcd_from_xyz(xyz, rgb=None):
+def pcd_from_xyz(xyz, rgb=None, conf=None):
     """
     Create open3d point cloud from xyz and rgb."""
     pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(xyz.reshape(-1, 3))
+    xyz = xyz.reshape(-1, 3)
+    if conf is not None:
+        conf = conf.reshape(-1)
+        xyz = xyz[conf]
+    pcd.points = o3d.utility.Vector3dVector(xyz)
+
+
     if rgb is not None:
         rgb = rgb.reshape(-1, 3)
+        if conf is not None:
+            rgb = rgb[conf]
         if rgb.max() > 1:
             rgb = rgb / 255
         pcd.colors = o3d.utility.Vector3dVector(rgb)
     return pcd
 
-def depth_map_to_pcd(depth_map, fx, fy, cx, cy, rgb=None):
+def depth_map_to_pcd(depth_map, fx, fy, cx, cy, rgb=None, conf=None):
     """
     Convert depth map to point cloud.
     """
@@ -28,7 +36,7 @@ def depth_map_to_pcd(depth_map, fx, fy, cx, cy, rgb=None):
     y = (np.arange(rows)[:, np.newaxis] - cy) * depth_map / fy
     z = depth_map
     xyz = np.stack((x, y, z), axis=-1)
-    pcd = pcd_from_xyz(xyz, rgb)
+    pcd = pcd_from_xyz(xyz, rgb, conf=conf)
     return pcd
 
 def mask_pcd(pcd, max_depth=None):
@@ -44,14 +52,21 @@ def mask_pcd(pcd, max_depth=None):
     pcd = pcd_from_xyz(xyz, rgb)
     return pcd
 
-def visualize_rgbd(depth, fx, fy, cx, cy, rgb=None, max_depth=None, out_file=None):
+def visualize_rgbd(depth, fx, fy, cx, cy, rgb=None, max_depth=None, conf=None, out_file=None):
     """
     Visualize rgbd images and depth images.
     """
     if rgb is not None:
         rgb = mmcv.imread(rgb, channel_order='rgb')
+    if conf is not None:
+        conf = cv2.imread(conf, 0)/255
+        conf = mmcv.imresize_like(conf, rgb)
+        conf = conf>0.995
+        # rgb = rgb * conf[..., None]
+
     depth = mmcv.imresize_like(depth, rgb)
-    pcd = depth_map_to_pcd(depth, fx, fy, cx, cy, rgb)
+
+    pcd = depth_map_to_pcd(depth, fx, fy, cx, cy, rgb, conf=conf)
     pcd = mask_pcd(pcd, max_depth)
     if out_file is not None:
         o3d.io.write_point_cloud(out_file, pcd)

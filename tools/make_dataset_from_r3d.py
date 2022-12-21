@@ -28,13 +28,18 @@ if __name__ == '__main__':
 
         out_rgb_path = osp.join(args.output_dir, 'images', osp.basename(rgb_path))
         out_depth_path = osp.join(args.output_dir, 'depths',osp.splitext(osp.basename(rgb_path))[0] + '.png')
+        out_segmenation_path = osp.join(args.output_dir, 'segmentations',osp.splitext(osp.basename(rgb_path))[0] + '.png')
         # Make dir if not exist
         os.makedirs(osp.dirname(out_rgb_path), exist_ok=True)
         os.makedirs(osp.dirname(out_depth_path), exist_ok=True)
+        os.makedirs(osp.dirname(out_segmenation_path), exist_ok=True)
         bgr = rgb[..., ::-1]
         cv2.imwrite(out_rgb_path, bgr)
-        # Save depth as uint16
         cv2.imwrite(out_depth_path, depth)
+        # Make conf_img to segmentation
+        segmentation = np.zeros_like(conf_img)
+        segmentation[conf_img == 2] = 255
+        cv2.imwrite(out_segmenation_path, segmentation)
 
     multi_thread(f, rgb_paths)
     intrinsics = pair_rgb_depth_from_r3d(rgb_paths[-1])[-1]
