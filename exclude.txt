@@ -1,8 +1,9 @@
 .vscode
 exclude.txt
 dms.sh
-FocusOnDepth/datasets
-FocusOnDepth/input
-FocusOnDepth/models
-FocusOnDepth/output
-FocusOnDepth/lightning_logs/
+training/datasets
+training/input
+training/output
+training/models
+output
+training/lightning_logs/

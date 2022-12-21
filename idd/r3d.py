@@ -52,8 +52,7 @@ def load_conf(filepath, meta):
 
 # default_meta = json.load(open('./data/r3d/metadata'))
 
-
-def pcd_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ext='conf', conf_lvl=2, verbose=False):
+def pair_rgb_depth_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ext='conf', conf_lvl=2, verbose=False):
     dir_name = os.path.dirname(file_path)
     file_name = get_name(file_path)
     rgb_path = os.path.join(dir_name, file_name + '.' + rgb_ext)
@@ -79,24 +78,25 @@ def pcd_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ext='conf', c
             print('Resizing depth image to match rgb image')
         depth_img = mmcv.imresize_like(depth_img, rgb, interpolation='nearest')
     
+    conf_img = None
     if osp.exists(conf_path):
+        conf_img = load_conf(conf_path, meta)
         conf_img = mmcv.imresize_like(conf_img, rgb, interpolation='nearest')
-        valid_mask = conf_img >= conf_lvl
 
-    # import ipdb; ipdb.set_trace()
+    return rgb, depth_img, conf_img, dict(fx=fx, fy=fy, cx=cx, cy=cy)
+
+def pcd_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ext='conf', conf_lvl=2, verbose=False):
+    rgb, depth_img, conf_img = pair_rgb_depth_from_r3d(file_path, rgb_ext, depth_ext, conf_ext, conf_lvl, verbose)
     depth_img[np.isnan(depth_img)] = 0
-
     xyz = _depth_map_to_point_cloud(depth_img, fx, fy, cx, cy)
-
-    if osp.exists(conf_path):
+    if conf_img is not None:
+        valid_mask = conf_img >= conf_lvl
         valid_mask = valid_mask.reshape(-1)
         xyz = xyz.reshape(-1, 3)[valid_mask]
         rgb = rgb.reshape(-1, 3)[valid_mask]
 
     from idd.rgbd import pcd_from_xyz
-
     pcd = pcd_from_xyz(xyz, rgb)
-
     return pcd
 
 

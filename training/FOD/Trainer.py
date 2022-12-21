@@ -70,7 +70,7 @@ class Trainer(object):
                     (X, Y_depths) = batch
                     X, Y_depths = X.to(self.device), Y_depths.to(self.device)
 
-                # print(Y_depths.max().item(), Y_depths.min().item())        
+                # print(Y_depths.max().item(), Y_depths.min().item())
                 # get the inputs; data is a list of [inputs, labels]
                 # zero the parameter gradients
                 self.optimizer_backbone.zero_grad()

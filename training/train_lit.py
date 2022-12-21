@@ -12,6 +12,7 @@ import torch.nn as nn
 from avcv.all import *
 with open('config.json', 'r') as f:
     config = json.load(f)
+    
 np.random.seed(config['General']['seed'])
 
 list_data = config['Dataset']['paths']['list_datasets']
@@ -35,9 +36,6 @@ model_trainer = Trainer(config)
 loss_depth = model_trainer.loss_depth
 
 model = model_trainer.model
-
-
-
 
 class CustomLitModel(LitModel):
     def training_step(self, batch, batch_idx):

@@ -58,16 +58,8 @@ class FaceModel:
                         landmark_list=face_landmarks,
                         connections=self.mp_face_mesh.FACEMESH_CONTOURS,
                         landmark_drawing_spec=None,
-                        connection_drawing_spec=self.mp_drawing_styles
+b                         connection_drawing_spec=self.mp_drawing_styles
                         .get_default_face_mesh_contours_style())
-
-                    # self.mp_drawing.draw_landmarks(
-                    #     image=annotated_image,
-                    #     landmark_list=face_landmarks,
-                    #     connections=self.mp_face_mesh.FACEMESH_IRISES,
-                    #     landmark_drawing_spec=None,
-                    #     connection_drawing_spec=self.mp_drawing_styles
-                    #     .get_default_face_mesh_iris_connections_style())
 
         return annotated_image, face_landmarks_np
 
@@ -79,6 +71,3 @@ class FaceModel:
         left_eye = face_landmarks_np[33: 42]
         right_eye = face_landmarks_np[133: 142]
         return left_eye, right_eye
-
-hmodel = HumanSegmentation()
-fmodel = FaceModel()
