@@ -3,7 +3,5 @@ exclude.txt
 dms.sh
 training/datasets
 training/input
-training/output
 training/models
-output
 training/lightning_logs/

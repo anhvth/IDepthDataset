@@ -27,13 +27,13 @@
         "no_augment": true,
         "paths":{
             "path_dataset":"./datasets",
-            "list_datasets":["iphone"], 
+            "list_datasets":["161222"], 
             "path_images":"images",
             "path_segmentations":"segmentations",
-            "path_depths":"depth_segmentation"
+            "path_depths":"depths"
         },
         "extensions":{
-            "ext_images":".png",
+            "ext_images":".jpg",
             "ext_segmentations":".png",
             "ext_depths":".png"
         },

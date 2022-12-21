@@ -21,6 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--cx', type=float, default=327.45, help='cx')
     parser.add_argument('--cy', type=float, default=238.49, help='cy')
     parser.add_argument('--intrinsic', default=None, type=str, help='intrinsic file')
+    parser.add_argument('--input_as_dir', action='store_true', help='input as dir')
 
     parser.add_argument('--max_depth', type=float, default=None, help='max depth')
     args = parser.parse_args()
@@ -32,5 +33,19 @@ if __name__ == '__main__':
     if args.depth is None:
         args.depth = args.rgb.replace('images', 'depths').replace('.jpg', '.png')
     # Read images
-    depth = cv2.imread(args.depth, cv2.IMREAD_ANYDEPTH)
-    visualize_rgbd(depth, args.fx, args.fy, args.cx, args.cy, args.rgb, args.max_depth)
+    if args.input_as_dir:
+        from glob import glob
+        depth_dir = os.path.dirname(args.depth)
+        path_depth = glob(f'{depth_dir}/*.png')
+        img_dir = os.path.dirname(args.rgb)
+        path_depth.sort()
+        for i, depth_path in enumerate(path_depth):
+            depth = cv2.imread(depth_path, cv2.IMREAD_ANYDEPTH)
+            rgb_path = os.path.join(img_dir, os.path.basename(depth_path).replace('.png', '.jpg'))
+            output_path = os.path.join('.cache', os.path.basename(depth_path).replace('.png', '.ply'))
+            visualize_rgbd(depth, args.fx, args.fy, args.cx, args.cy, rgb_path, args.max_depth, out_file=output_path)
+            print('Processing {}/{}'.format(i, len(path_depth)), '->', output_path)
+
+    else:
+        depth = cv2.imread(args.depth, cv2.IMREAD_ANYDEPTH)
+        visualize_rgbd(depth, args.fx, args.fy, args.cx, args.cy, args.rgb, args.max_depth)

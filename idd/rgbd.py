@@ -44,13 +44,16 @@ def mask_pcd(pcd, max_depth=None):
     pcd = pcd_from_xyz(xyz, rgb)
     return pcd
 
-def visualize_rgbd(depth, fx, fy, cx, cy, rgb=None, max_depth=None):
+def visualize_rgbd(depth, fx, fy, cx, cy, rgb=None, max_depth=None, out_file=None):
     """
     Visualize rgbd images and depth images.
     """
     if rgb is not None:
         rgb = mmcv.imread(rgb, channel_order='rgb')
-
+    depth = mmcv.imresize_like(depth, rgb)
     pcd = depth_map_to_pcd(depth, fx, fy, cx, cy, rgb)
     pcd = mask_pcd(pcd, max_depth)
-    o3d.visualization.draw_geometries([pcd])
+    if out_file is not None:
+        o3d.io.write_point_cloud(out_file, pcd)
+    else:
+        o3d.visualization.draw_geometries([pcd])
