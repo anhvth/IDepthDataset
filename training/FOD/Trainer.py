@@ -37,7 +37,11 @@ class Trainer(object):
         self.model.to(self.device)
         if self.config['General']['pretrained']:
             ckpt = torch.load(self.config['General']['pretrained'], map_location=self.device)
-            self.model.load_state_dict(ckpt['model_state_dict'])
+            st = ckpt['model_state_dict']
+            del st['head_segmentation.head.4.weight']
+            del st['head_segmentation.head.4.bias']
+            res = self.model.load_state_dict(st, strict=False)
+            print(res)
         # print(self.model)
         # exit(0)
 

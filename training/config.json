@@ -51,7 +51,11 @@
         },
         "classes":{
             "1": {
-                "name": "person",
+                "name": "low",
+                "color": [150,5,61]
+            },
+            "2": {
+                "name": "high",
                 "color": [150,5,61]
             }
         }

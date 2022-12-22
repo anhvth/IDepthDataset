@@ -24,6 +24,8 @@ class ToMask(object):
                 output_array[mask[:, :, 0]] = int(label)
         else:
             output_array = image_array.astype("int")
+            # print(np.unique(output_array))
+
 
 
         output_array = torch.from_numpy(output_array).unsqueeze(0).long()

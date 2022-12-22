@@ -24,6 +24,7 @@ for dataset_name in list_data:
 train_data = ConcatDataset(autofocus_datasets_train)
 train_dataloader = DataLoader(train_data, batch_size=config['General']['batch_size'], shuffle=True, num_workers=4)
 batch = next(iter(train_dataloader))
+print(f'{batch.keys()=}')
 ## validation set
 autofocus_datasets_val = []
 for dataset_name in list_data:
@@ -34,21 +35,28 @@ val_loader = DataLoader(val_data, batch_size=config['General']['batch_size'], sh
 model_trainer = Trainer(config)
 
 loss_depth = model_trainer.loss_depth
-
+loss_seg = model_trainer.loss_segmentation
 model = model_trainer.model
 
 class CustomLitModel(LitModel):
     def training_step(self, batch, batch_idx):
         x, y = batch['image'], batch['depth']
-        depth_pred = self(x)[0]
-        loss = loss_depth(depth_pred, y)
+        depth_pred, seg_pred = self(x)
+        ld = loss_depth(depth_pred, y)
+        ls = loss_seg(seg_pred.permute([0,2,3,1]).reshape(-1,3), batch['segmentation'].permute([0,2,3,1]).reshape(-1))
+        loss = ld# + ls
+
+        self.log('train/loss', ld, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('train/loss_seg', ls, on_step=False, on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch['image'], batch['depth']
-        depth_pred = self(x)[0]
-        loss = loss_depth(depth_pred, y)
-        self.log('val/loss', loss, on_step=False, on_epoch=True, prog_bar=True)
+        depth_pred, seg_pred = self(x)
+        ld = loss_depth(depth_pred, y)
+        ls = loss_seg(seg_pred.permute([0,2,3,1]).reshape(-1,3), batch['segmentation'].permute([0,2,3,1]).reshape(-1))
+        self.log('val/loss', ld, on_step=False, on_epoch=True, prog_bar=True)
+        self.log('val/loss_seg', ls, on_step=False, on_epoch=True, prog_bar=True)
 
     def predict_step(self, batch, batch_idx):
         x  = batch['image']
@@ -57,9 +65,8 @@ class CustomLitModel(LitModel):
             depth = depth_pred[i].detach().cpu().numpy()[0]
             filename = batch['filename'][i]
             depth = (depth*3000).astype(np.uint16)
-            conf = seg_pred[i].softmax(0)[1].detach().cpu().numpy()
+            conf = seg_pred[i].softmax(0)[2].detach().cpu().numpy()
             conf = (conf*255).astype(np.uint8)
-            # import ipdb; ipdb.set_trace()
             mmcv.imwrite(depth, f'./output/depth/{filename}.png')
             mmcv.imwrite(conf, f'./output/segmentation/{filename}.png')
 
@@ -102,6 +109,6 @@ if args.ckpt is not None:
 else:
     trainer = get_trainer('focus_on_depth', config['General']['epochs'], gpus=config['General']['gpus'], strategy=config['General']['strategy'])
     logger.info('Training from scratch')
-    ckpt = torch.load('lightning_logs/focus_on_depth/01/ckpts/last.ckpt')
-    lit_model.load_state_dict(ckpt['state_dict'])
+    # ckpt = torch.load('lightning_logs/focus_on_depth/02/ckpts/epoch=16_val_loss=0.0000.ckpt')
+    # lit_model.load_state_dict(ckpt['state_dict'])
     trainer.fit(lit_model, train_dataloader, val_loader)

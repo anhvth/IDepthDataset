@@ -139,10 +139,10 @@ class AutoFocusDataset(Dataset):
             depth = transforms.Resize((self.resize, self.resize))(depth)
             if self.with_segmentation:
                 segmentation = transforms.Resize((self.resize, self.resize), interpolation=transforms.InterpolationMode.NEAREST)(segmentation)
-        # if self.with_segmentation:
-        #     return image, depth, segmentation
-        # else:
-        return dict(image=image, depth=depth, filename=get_name(self.paths_images[idx]))
+        ret = dict(image=image, depth=depth, filename=get_name(self.paths_images[idx]))
+        if self.with_segmentation:
+            ret['segmentation'] = segmentation
+        return ret
 if __name__ == '__main__':
     import json
     with open('config.json', 'r') as f:

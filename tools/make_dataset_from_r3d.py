@@ -21,7 +21,7 @@ if __name__ == '__main__':
         # Depth are in meters, convert to mm
         
         depth = (depth * 1000).astype(np.uint16)
-        valid_mask = np.logical_and(depth > 0, depth < 3000)
+        valid_mask = np.logical_and(depth > 0, depth < 1000)
         valid_mask = np.logical_and(valid_mask, conf_img == 2)
 
         depth[~valid_mask] = 0
@@ -37,9 +37,8 @@ if __name__ == '__main__':
         cv2.imwrite(out_rgb_path, bgr)
         cv2.imwrite(out_depth_path, depth)
         # Make conf_img to segmentation
-        segmentation = np.zeros_like(conf_img)
-        segmentation[conf_img == 2] = 255
-        cv2.imwrite(out_segmenation_path, segmentation)
+        conf_img = conf_img.astype(int)
+        cv2.imwrite(out_segmenation_path, conf_img)
 
     multi_thread(f, rgb_paths)
     intrinsics = pair_rgb_depth_from_r3d(rgb_paths[-1])[-1]
