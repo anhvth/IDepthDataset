@@ -12,7 +12,6 @@ def pcd_from_xyz(xyz, rgb=None, conf=None):
         xyz = xyz[conf]
     pcd.points = o3d.utility.Vector3dVector(xyz)
 
-
     if rgb is not None:
         rgb = rgb.reshape(-1, 3)
         if conf is not None:
@@ -61,7 +60,7 @@ def visualize_rgbd(depth, fx, fy, cx, cy, rgb=None, max_depth=None, conf=None, o
     if conf is not None:
         conf = cv2.imread(conf, 0)/255
         conf = mmcv.imresize_like(conf, rgb)
-        conf = conf>0.995
+        conf = conf>0.9
         # rgb = rgb * conf[..., None]
 
     depth = mmcv.imresize_like(depth, rgb)

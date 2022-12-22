@@ -96,7 +96,7 @@ if args.ckpt is not None:
     T = pred_data.transform_image
     class DS:
         def __init__(self):
-            self.paths = paths = glob('/home/anhvth8/gitprojects/IDepthDataset/data/211222-2/rgbd/*.jpg')
+            self.paths = paths = glob('/home/anhvth8/gitprojects/IDepthDataset/data/221222-1/rgbd/*.jpg')
         def __len__(self):
             return len(self.paths)
         def __getitem__(self, idx):

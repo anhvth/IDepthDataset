@@ -9,12 +9,15 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_dir')
-    parser.add_argument('--output_dir')
+    parser.add_argument('--output_dir', default=None)
     parser.add_argument('--ext', default='jpg')
     args = parser.parse_args()
-
+    if args.output_dir is None:
+        dir_name = os.path.normpath(args.input_dir).split(os.sep)[-2]
+        args.output_dir = osp.join('training/datasets/', dir_name)
+        logger.info(f'output_dir is not specified, using {args.output_dir}')
     rgb_paths = glob(osp.join(args.input_dir, f'*.{args.ext}'))
-    # for rgb_path in tqdm(rgb_paths):
+    
     def f(rgb_path):
         rgb, depth, conf_img, intrinsics = pair_rgb_depth_from_r3d(rgb_path)
 
