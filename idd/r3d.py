@@ -84,7 +84,6 @@ def pair_rgb_depth_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ex
         conf_img = mmcv.imresize_like(conf_img, rgb, interpolation='nearest')
 
     return rgb, depth_img, conf_img, dict(fx=fx, fy=fy, cx=cx, cy=cy)
-
 def pcd_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ext='conf', conf_lvl=2, verbose=False):
     rgb, depth_img, conf_img = pair_rgb_depth_from_r3d(file_path, rgb_ext, depth_ext, conf_ext, conf_lvl, verbose)
     depth_img[np.isnan(depth_img)] = 0
@@ -95,8 +94,7 @@ def pcd_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ext='conf', c
         xyz = xyz.reshape(-1, 3)[valid_mask]
         rgb = rgb.reshape(-1, 3)[valid_mask]
 
+
     from idd.rgbd import pcd_from_xyz
     pcd = pcd_from_xyz(xyz, rgb)
     return pcd
-
-

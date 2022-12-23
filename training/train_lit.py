@@ -1,5 +1,8 @@
 import argparse
 parser = argparse.ArgumentParser()
+
+
+parser.add_argument('--ckpt',default=None)
 parser.add_argument('--config', default='training/config.json')
 args = parser.parse_args()
 
@@ -90,11 +93,6 @@ optim = lambda params:torch.optim.Adam(params, lr=config['General']['lr_scratch'
 
 lit_model = CustomLitModel(model.cpu(), create_lr_scheduler_fn=sched, create_optimizer_fn=optim)
 
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument('--ckpt',default=None)
-args = parser.parse_args()
-
 if args.ckpt is not None:
     trainer = get_trainer('focus_on_depth/predict', gpus=1, strategy='dp')
     ckpt = torch.load(args.ckpt)['state_dict']
@@ -114,8 +112,11 @@ if args.ckpt is not None:
     batch = next(iter(pred_loader))
     trainer.predict(lit_model, pred_loader)
 else:
-    trainer = get_trainer('focus_on_depth', config['General']['epochs'], gpus=config['General']['gpus'], strategy=config['General']['strategy'])
+
+
+    trainer = get_trainer('focus_on_depth', 
+            config['General']['epochs'], gpus=config['General']['gpus'], strategy='dp',
+            accelerator="cpu"  if not torch.cuda.is_available() else "gpu"
+            )
     logger.info('Training from scratch')
-    # ckpt = torch.load('lightning_logs/focus_on_depth/02/ckpts/epoch=16_val_loss=0.0000.ckpt')
-    # lit_model.load_state_dict(ckpt['state_dict'])
     trainer.fit(lit_model, train_dataloader, val_loader)
