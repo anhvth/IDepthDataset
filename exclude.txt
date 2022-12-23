@@ -8,3 +8,4 @@ training/lightning_logs/
 .cache
 data
 lightning_logs
+output
