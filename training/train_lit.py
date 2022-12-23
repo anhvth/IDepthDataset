@@ -14,8 +14,11 @@ parser = argparse.ArgumentParser()
 
 
 parser.add_argument('--ckpt', default=None)
+parser.add_argument('--predict_dir', '-p', default=None)
 parser.add_argument('--config', default='training/config.json')
 parser.add_argument('--debug', action='store_true')
+# rank
+parser.add_argument('--local_rank', type=int, default=0)
 args = parser.parse_args()
 
 
@@ -43,12 +46,11 @@ autofocus_datasets_train = []
 for dataset_name in list_data:
     autofocus_datasets_train.append(
         AutoFocusDataset(config, dataset_name, 'train'))
+
 train_data = ConcatDataset(autofocus_datasets_train)
 train_dataloader = DataLoader(
     train_data, batch_size=config['General']['batch_size'], shuffle=True, num_workers=config['General']['num_workers'])
 batch = next(iter(train_dataloader))
-print(f'{batch.keys()=}')
-# validation set
 autofocus_datasets_val = []
 for dataset_name in list_data:
     autofocus_datasets_val.append(
@@ -56,6 +58,9 @@ for dataset_name in list_data:
 val_data = ConcatDataset(autofocus_datasets_val)
 val_loader = DataLoader(
     val_data, batch_size=config['General']['batch_size'], shuffle=False, num_workers=config['General']['num_workers'])
+
+
+
 
 model_trainer = Trainer(config)
 
@@ -71,7 +76,7 @@ class CustomLitModel(LitModel):
         ld = loss_depth(depth_pred, y)
         ls = loss_seg(seg_pred.permute(
             [0, 2, 3, 1]).reshape(-1, 3), batch['segmentation'].permute([0, 2, 3, 1]).reshape(-1))
-        loss = ld  # + ls
+        loss = ld   + ls
 
         self.log('train/loss', ld, on_step=False, on_epoch=True, prog_bar=True)
         self.log('train/loss_seg', ls, on_step=False,
@@ -98,7 +103,7 @@ class CustomLitModel(LitModel):
             conf = seg_pred[i].softmax(0)[2].detach().cpu().numpy()
             conf = (conf*255).astype(np.uint8)
             mmcv.imwrite(depth, f'./output/depth/{filename}.png')
-            mmcv.imwrite(conf, f'./output/segmentation/{filename}.png')
+            # mmcv.imwrite(conf, f'./output/segmentation/{filename}.png')
 
 
 sched = fn_schedule_cosine_with_warmpup_decay_timm(
@@ -116,7 +121,7 @@ lit_model = CustomLitModel(
     model.cpu(), create_lr_scheduler_fn=sched, create_optimizer_fn=optim)
 
 if args.ckpt is not None:
-    trainer = get_trainer('focus_on_depth/predict', gpus=1, strategy='dp')
+    trainer = get_trainer('focus_on_depth/predict', gpus=1, strategy='ddp')
     ckpt = torch.load(args.ckpt)['state_dict']
     lit_model.load_state_dict(ckpt)
     pred_data = AutoFocusDataset(config, dataset_name, 'predict')
@@ -124,8 +129,7 @@ if args.ckpt is not None:
 
     class DS:
         def __init__(self):
-            self.paths = paths = glob(
-                '/home/anhvth8/gitprojects/IDepthDataset/data/221222-1/rgbd/*.jpg')
+            self.paths = paths = glob(osp.join(args.predict_dir, '*.jpg'))
 
         def __len__(self):
             return len(self.paths)
@@ -144,5 +148,22 @@ else:
                           accelerator="cpu" if not torch.cuda.is_available() else "gpu",
                           refresh_rate=1 if args.debug else 5,
                           overfit_batches=2 if args.debug else 0)
-    logger.info('Training from scratch')
+
+    #============= Print
+    # Check rank using pytorch_lightning
+    if trainer.global_rank == 0:
+        logger.info("===================================")
+        logger.info("Batch size: {}".format(config['General']['batch_size']))
+        logger.info("Number of train batches: {}".format(len(train_dataloader)))
+        logger.info("Number of val batches: {}".format(len(val_loader)))
+        logger.info("Number of epochs: {}".format(config['General']['epochs']))
+        logger.info("Effective batch size: {}".format(config['General']['batch_size']*config['General']['gpus']))
+        logger.info("===================================")
+        logger.info('Training from scratch')
+    #===================================
+    ckpt_path = "lightning_logs/focus_on_depth/02/ckpts/last.ckpt"
+    if osp.exists(ckpt_path):
+        ckpt = torch.load(ckpt_path)['state_dict']
+        lit_model.load_state_dict(ckpt)
+        logger.info('Load ckpt from {}'.format(ckpt_path))
     trainer.fit(lit_model, train_dataloader, val_loader)

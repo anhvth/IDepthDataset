@@ -8,7 +8,7 @@ echo "Remote dir" $remote_dir
 if [ "$1" = "pull" ];
   then
     # Pull from dms
-    cmd="rsync -avz -e ssh --exclude-from 'exclude.txt' $REMOTE_MACHINE:$remote_dir $local_dir ${@:2}}"
+    cmd="rsync -avz -e ssh --exclude-from 'exclude.txt' $REMOTE_MACHINE:$remote_dir $local_dir ${@:2}"
     echo $cmd
     eval $cmd
 elif [ "$1" = "push" ];

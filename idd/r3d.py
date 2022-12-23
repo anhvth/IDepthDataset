@@ -85,9 +85,9 @@ def pair_rgb_depth_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ex
 
     return rgb, depth_img, conf_img, dict(fx=fx, fy=fy, cx=cx, cy=cy)
 def pcd_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ext='conf', conf_lvl=2, verbose=False):
-    rgb, depth_img, conf_img = pair_rgb_depth_from_r3d(file_path, rgb_ext, depth_ext, conf_ext, conf_lvl, verbose)
+    rgb, depth_img, conf_img, intrinsic = pair_rgb_depth_from_r3d(file_path, rgb_ext, depth_ext, conf_ext, conf_lvl, verbose)
     depth_img[np.isnan(depth_img)] = 0
-    xyz = _depth_map_to_point_cloud(depth_img, fx, fy, cx, cy)
+    xyz = _depth_map_to_point_cloud(depth_img, intrinsic['fx'], intrinsic['fy'], intrinsic['cx'], intrinsic['cy'])
     if conf_img is not None:
         valid_mask = conf_img >= conf_lvl
         valid_mask = valid_mask.reshape(-1)
