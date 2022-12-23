@@ -5,3 +5,4 @@ output
 .cache
 idepthdataset.egg-info/
 .DS_Store
+camera-calibration/samples

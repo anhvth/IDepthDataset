@@ -1,14 +1,14 @@
 import cv2
 from avcv.all import *
+
+import argparse
+parser = argparse.ArgumentParser()
+
 # Set up the object points in the 3D world and the corresponding points in the images
 object_points = []
 image_points = []
-
-# Set the number of inner corners per row and column in the checkerboard
 pattern_size = (9, 6)
 
-# Load the checkerboard images
-# images = [cv2.imread('image1.jpg'), cv2.imread('image2.jpg'), cv2.imread('image3.jpg')]
 def read_heic(f):
     from PIL import Image
     import pillow_heif
@@ -24,8 +24,6 @@ def read_heic(f):
     img = cv2.resize(img, (640, 480))
     return img
 
-import argparse
-parser = argparse.ArgumentParser()
 parser.add_argument('input_dir')
 args = parser.parse_args()
 images = glob(args.input_dir+'/*.HEIC')
