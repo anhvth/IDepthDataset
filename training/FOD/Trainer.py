@@ -20,7 +20,6 @@ class Trainer(object):
         self.with_segmentation = self.config['Dataset']['with_segmentation']
 
         self.device = torch.device(self.config['General']['device'] if torch.cuda.is_available() else "cpu")
-        print("device: %s" % self.device)
         resize = config['Dataset']['transforms']['resize']
         self.model = FocusOnDepth(
                     image_size  =   (3,resize,resize),
