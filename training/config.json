@@ -27,7 +27,7 @@
         "with_segmentation": true,
         "no_augment": true,
         "paths":{
-            "path_dataset":"./datasets",
+            "path_dataset":"./datasets/rgbd",
             "list_datasets":["161222", "211222", "211222-2"], 
             "path_images":"images",
             "path_segmentations":"segmentations",

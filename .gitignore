@@ -6,3 +6,4 @@ output
 idepthdataset.egg-info/
 .DS_Store
 camera-calibration/samples
+raw_data

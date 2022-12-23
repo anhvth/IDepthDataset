@@ -12,7 +12,7 @@ if [ "$1" = "pull" ];
 elif [ "$1" = "push" ];
   then
     # rsync over ssh
-    cmd="rsync -avz -e ssh --exclude-from 'exclude.txt' --include-from 'include.txt' $local_dir $REMOTE_MACHINE:$remote_dir"
+    cmd="rsync -avz -e ssh --exclude-from 'exclude.txt' $local_dir $REMOTE_MACHINE:$remote_dir"
     echo $cmd
     eval $cmd
 else
