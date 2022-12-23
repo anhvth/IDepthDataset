@@ -93,19 +93,17 @@ class CustomLitModel(LitModel):
         for i in range(len(depth_pred)):
             depth = depth_pred[i].detach().cpu().numpy()[0]
             filename = batch['filename'][i] #example ./data/rgbd/2022-12-16--15-54-58/images/704.jpg
-            depth = (depth*3000).astype(np.uint16)
+            depth = (depth*5000).astype(np.uint16)
             
             conf = seg_pred[i].argmax(0).cpu().numpy()
 
-            
-            
             vname = filename.split('/')[3]
             filename = filename.split('/')[-1].split('.')[0]
             out_filename_depth = f'output/{vname}/depth/{filename}.png'
             out_filename_conf = f'output/{vname}/conf/{filename}.png'
             
             mmcv.imwrite(depth, out_filename_depth)
-            mmcv.imwrite(conf, out_filename_conf)
+            # mmcv.imwrite(conf, out_filename_conf)
 
 
 sched = fn_schedule_cosine_with_warmpup_decay_timm(

@@ -7,7 +7,10 @@ def pcd_from_xyz(xyz, rgb=None, conf=None):
     Create open3d point cloud from xyz and rgb."""
     pcd = o3d.geometry.PointCloud()
     xyz = xyz.reshape(-1, 3)
+    
+    
     if conf is not None:
+        conf = conf.astype(bool)
         conf = conf.reshape(-1)
         xyz = xyz[conf]
     pcd.points = o3d.utility.Vector3dVector(xyz)
@@ -58,10 +61,8 @@ def visualize_rgbd(depth, fx, fy, cx, cy, rgb=None, max_depth=None, conf=None, o
     if rgb is not None:
         rgb = mmcv.imread(rgb, channel_order='rgb')
     if conf is not None:
-        conf = cv2.imread(conf, 0)/255
-        conf = mmcv.imresize_like(conf, rgb)
-        conf = conf>0.9
-        # rgb = rgb * conf[..., None]
+        conf = (cv2.imread(conf, 0)==2).astype(np.uint8)
+        conf = mmcv.imresize_like(conf, rgb, interpolation='nearest')
 
     depth = mmcv.imresize_like(depth, rgb)
 
