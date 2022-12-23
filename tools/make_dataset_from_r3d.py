@@ -41,21 +41,27 @@ if __name__ == '__main__':
 
     path_r3ds = glob(osp.join(args.input_dir, '*.r3d'))
     for path_r3d in path_r3ds:
-        fn = osp.splitext(osp.basename(path_r3d))[0]
-        unzip_dir = osp.join('.cache/unzip_r3d/', fn)
-        
-        os.makedirs(unzip_dir, exist_ok=True)
-        
-        if len(glob(osp.join(unzip_dir, '*'))) == 0:
-            os.system(f'unzip {path_r3d} -d {unzip_dir}')
+        try:
+            fn = osp.splitext(osp.basename(path_r3d))[0]
+            unzip_dir = osp.join('.cache/unzip_r3d/', fn)
+            
+            os.makedirs(unzip_dir, exist_ok=True)
+            
+            if len(glob(osp.join(unzip_dir, '*'))) == 0:
+                os.system(f'unzip {path_r3d} -d {unzip_dir}')
 
-        rgb_paths = glob(osp.join(unzip_dir, 'rgbd/*.jpg'))
-        assert len(rgb_paths) > 0, f'No rgb images in {unzip_dir}'
-        output_dir = osp.join(args.output_dir, fn)
-        pair_inputs = [(rgb_path, output_dir) for rgb_path in rgb_paths]
-        multi_thread(f, pair_inputs)
-        intrinsics = pair_rgb_depth_from_r3d(rgb_paths[-1])[-1]
-        mmcv.dump(intrinsics, osp.join(output_dir, 'intrinsics.json'))
+            rgb_paths = glob(osp.join(unzip_dir, 'rgbd/*.jpg'))
+            assert len(rgb_paths) > 0, f'No rgb images in {unzip_dir}'
+            output_dir = osp.join(args.output_dir, fn)
+            pair_inputs = [(rgb_path, output_dir) for rgb_path in rgb_paths]
+            multi_thread(f, pair_inputs)
+            intrinsics = pair_rgb_depth_from_r3d(rgb_paths[-1])[-1]
+            mmcv.dump(intrinsics, osp.join(output_dir, 'intrinsics.json'))
 
-        # Ask user to remove unzip_dir
-        print(f'Please remove {unzip_dir} if you want to save disk space')
+            # Ask user to remove unzip_dir
+            print(f'Please remove {unzip_dir} if you want to save disk space')
+        except:
+            print(f'Error in {path_r3d}')
+            # Clean
+            os.system(f'rm -rf {unzip_dir}')
+            continue

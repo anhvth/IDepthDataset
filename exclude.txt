@@ -6,3 +6,4 @@ training/input
 training/models
 training/lightning_logs/
 .cache
+data
