@@ -21,8 +21,8 @@
         "gpus":4,
         "strategy":"ddp",
         "batch_size":16,
-        "pretrained":"training/models/FocusOnDepth_vit_base_patch16_384.p"
-        
+        "pretrained":"training/models/FocusOnDepth_vit_base_patch16_384.p",
+        "num_workers":4
     },
     "Dataset":{
         "with_segmentation": true,

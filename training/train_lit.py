@@ -15,24 +15,37 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument('--ckpt', default=None)
 parser.add_argument('--config', default='training/config.json')
+parser.add_argument('--debug', action='store_true')
 args = parser.parse_args()
 
 
 with open(args.config, 'r') as f:
     config = json.load(f)
 
+
+
+
+if args.debug:
+    config['General']['batch_size'] = 2
+    config['General']['num_epochs'] = 1
+    config['General']['num_workers'] = 0
+    config['General']['seed'] = 0
+
+
+
+
 np.random.seed(config['General']['seed'])
 
 list_data = config['Dataset']['paths']['list_datasets']
 
-# train set
+
 autofocus_datasets_train = []
 for dataset_name in list_data:
     autofocus_datasets_train.append(
         AutoFocusDataset(config, dataset_name, 'train'))
 train_data = ConcatDataset(autofocus_datasets_train)
 train_dataloader = DataLoader(
-    train_data, batch_size=config['General']['batch_size'], shuffle=True, num_workers=0)
+    train_data, batch_size=config['General']['batch_size'], shuffle=True, num_workers=config['General']['num_workers'])
 batch = next(iter(train_dataloader))
 print(f'{batch.keys()=}')
 # validation set
@@ -42,7 +55,7 @@ for dataset_name in list_data:
         AutoFocusDataset(config, dataset_name, 'val'))
 val_data = ConcatDataset(autofocus_datasets_val)
 val_loader = DataLoader(
-    val_data, batch_size=config['General']['batch_size'], shuffle=False, num_workers=4)
+    val_data, batch_size=config['General']['batch_size'], shuffle=False, num_workers=config['General']['num_workers'])
 
 model_trainer = Trainer(config)
 
@@ -95,8 +108,6 @@ sched = fn_schedule_cosine_with_warmpup_decay_timm(
     min_lr=1/100,
     cycle_decay=0.7,
 )
-
-
 def optim(params): return torch.optim.Adam(
     params, lr=config['General']['lr_scratch'])
 
@@ -130,7 +141,8 @@ if args.ckpt is not None:
 else:
     trainer = get_trainer('focus_on_depth',
                           config['General']['epochs'], gpus=config['General']['gpus'], strategy=config['General']['strategy'],
-                          accelerator="cpu" if not torch.cuda.is_available() else "gpu"
-                          )
+                          accelerator="cpu" if not torch.cuda.is_available() else "gpu",
+                          refresh_rate=1 if args.debug else 5,
+                          overfit_batches=2 if args.debug else 0)
     logger.info('Training from scratch')
     trainer.fit(lit_model, train_dataloader, val_loader)

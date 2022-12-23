@@ -86,11 +86,12 @@ class AutoFocusDataset(Dataset):
         image = self.transform_image(Image.open(self.paths_images[idx]))
         # import ipdb; ipdb.set_trace()
         depth = cv2.imread(self.paths_depths[idx], cv2.IMREAD_ANYDEPTH)
-        depth = cv2.resize(depth, (self.resize, self.resize), interpolation=cv2.INTER_NEAREST)/3000
+        depth[depth > 5000] = 0
+        depth = cv2.resize(depth, (self.resize, self.resize), interpolation=cv2.INTER_NEAREST)/5000
         depth = torch.from_numpy(depth).unsqueeze(0).float()
 
 
-        # depth = self.transform_depth(depth)
+
 
         if self.with_segmentation:
             segmentation = self.transform_seg(Image.open(self.paths_segmentations[idx]))
