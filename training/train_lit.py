@@ -1,3 +1,8 @@
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--config', default='training/config.json')
+args = parser.parse_args()
+
 import json
 import numpy as np
 import torch
@@ -10,7 +15,9 @@ from FOD.dataset import AutoFocusDataset
 from ple.all import *
 import torch.nn as nn
 from avcv.all import *
-with open('config.json', 'r') as f:
+
+
+with open(args.config, 'r') as f:
     config = json.load(f)
     
 np.random.seed(config['General']['seed'])
