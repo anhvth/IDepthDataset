@@ -63,13 +63,13 @@ def pair_rgb_depth_from_r3d(file_path, rgb_ext='jpg', depth_ext='depth', conf_ex
     meta_path = os.path.join(dir_name, '../metadata')
     meta = json.load(open(meta_path))
     K = np.array(meta['K']).reshape(3, 3).T
+    
     if verbose:
         print(K)
-    fx, fy, cx, cy = K[0, 0], K[1, 1], K[0, 2], K[1, 2]
-    # import ipdb; ipdb.set_trace()
-    # Get images/point cloud
-    rgb = cv2.imread(rgb_path)[..., ::-1].copy()
     
+    fx, fy, cx, cy = K[0, 0], K[1, 1], K[0, 2], K[1, 2]
+
+    rgb = cv2.imread(rgb_path)[..., ::-1].copy()
     depth_img = load_depth(depth_path, meta).copy()
     if osp.exists(conf_path):
         conf_img = load_conf(conf_path, meta)

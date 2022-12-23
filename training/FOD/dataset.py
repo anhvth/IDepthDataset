@@ -69,6 +69,7 @@ class AutoFocusDataset(Dataset):
         self.p_rot = config['Dataset']['transforms']['p_rot'] if split=='train' else 0
         self.resize = config['Dataset']['transforms']['resize']
         assert len(self)
+        item = self[0]
         
     def __len__(self):
         """

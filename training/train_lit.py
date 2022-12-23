@@ -112,8 +112,6 @@ if args.ckpt is not None:
     batch = next(iter(pred_loader))
     trainer.predict(lit_model, pred_loader)
 else:
-
-
     trainer = get_trainer('focus_on_depth', 
             config['General']['epochs'], gpus=config['General']['gpus'], strategy='dp',
             accelerator="cpu"  if not torch.cuda.is_available() else "gpu"
